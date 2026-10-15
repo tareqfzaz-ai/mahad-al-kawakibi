@@ -10,7 +10,6 @@ on:
   workflow_dispatch:
 permissions:
   contents: read
-  actions: write
 jobs:
   build:
     runs-on: ubuntu-latest
@@ -23,7 +22,9 @@ jobs:
           distribution: temurin
           java-version: '17'
       - name: Set up Android SDK
-        uses: android-actions/setup-android@v3
+        uses: android-actions/setup-android@v4
+        with:
+          packages: 'platform-tools'
       - name: Install Gradle
         uses: gradle/actions/setup-gradle@v4
         with:
