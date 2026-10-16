@@ -65,10 +65,14 @@ const tableSpecs=[
  {key:'marks',table:'marks',row:r=>({id:r.id,user_id:currentUser.id,student_id:r.student,subject:r.subject,kind:r.kind||'',score:Number(r.score),date:r.date,note:r.note||''})},
  {key:'notifications',table:'notifications',row:r=>({id:r.id,user_id:currentUser.id,student:r.student,date:r.date,time:r.time||''})}
 ];
+let saveQueue=Promise.resolve();
 async function syncCloud(){
+  // Freeze the exact state being synced so edits made during a network request
+  // are picked up by the next queued save instead of being mistaken as saved.
+  const target=cloneData(db);
   const previous=cloudSnapshot||{students:[],teachers:[],attendance:[],marks:[],notifications:[]};
   const changes=tableSpecs.map(spec=>{
-   const now=db[spec.key]||[],before=previous[spec.key]||[],oldById=new Map(before.map(x=>[x.id,x]));
+   const now=target[spec.key]||[],before=previous[spec.key]||[],oldById=new Map(before.map(x=>[x.id,x]));
    for(const rec of now)if(!rec.id)rec.id=crypto.randomUUID();
    const currentIds=new Set(now.map(x=>x.id));
    return {spec,changed:now.filter(rec=>!oldById.has(rec.id)||JSON.stringify(oldById.get(rec.id))!==JSON.stringify(rec)).map(spec.row),removed:before.filter(x=>!currentIds.has(x.id)).map(x=>x.id)};
@@ -80,8 +84,19 @@ async function syncCloud(){
   for(const item of [...changes].reverse()){
    if(item.removed.length){const {error}=await sb.from(item.spec.table).delete().in('id',item.removed);if(error)throw error}
   }
+  // Advance the snapshot only after every cloud operation succeeded.
+  cloudSnapshot=target;
 }
-async function save(){render();if(!currentUser)return;try{await syncCloud();cloudSnapshot=cloneData(db);render()}catch(e){console.error('Cloud save failed',e);alert('تعذّر حفظ التغييرات سحابياً. تأكد من اتصال الإنترنت، ولا تغلق الصفحة قبل إعادة المحاولة. تفاصيل الخطأ: '+(e.message||'غير متاحة'))}}
+async function save(){
+  render();
+  if(!currentUser)return;
+  // Serialize writes. Rapid add/delete actions must not race and recreate a row.
+  saveQueue=saveQueue.then(async()=>{
+    try{await syncCloud();render()}
+    catch(e){console.error('Cloud save failed',e);alert('تعذّر حفظ التغييرات سحابياً. تأكد من اتصال الإنترنت، ولا تغلق الصفحة قبل إعادة المحاولة. تفاصيل الخطأ: '+(e.message||'غير متاحة'))}
+  });
+  return saveQueue;
+}
 async function loadCloudData(user){
  currentUser=user;
  const results=await Promise.all([
