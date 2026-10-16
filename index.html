@@ -66,15 +66,20 @@ const tableSpecs=[
  {key:'notifications',table:'notifications',row:r=>({id:r.id,user_id:currentUser.id,student:r.student,date:r.date,time:r.time||''})}
 ];
 async function syncCloud(){
- const previous=cloudSnapshot||{students:[],teachers:[],attendance:[],marks:[],notifications:[]};
- for(const spec of tableSpecs){
-  const now=db[spec.key]||[],before=previous[spec.key]||[],oldById=new Map(before.map(x=>[x.id,x]));
-  for(const rec of now)if(!rec.id)rec.id=crypto.randomUUID();
-  const changed=now.filter(rec=>!oldById.has(rec.id)||JSON.stringify(oldById.get(rec.id))!==JSON.stringify(rec)).map(spec.row);
-  if(changed.length){const {error}=await sb.from(spec.table).upsert(changed);if(error)throw error}
-  const currentIds=new Set(now.map(x=>x.id)),removed=before.filter(x=>!currentIds.has(x.id)).map(x=>x.id);
-  if(removed.length){const {error}=await sb.from(spec.table).delete().in('id',removed);if(error)throw error}
- }
+  const previous=cloudSnapshot||{students:[],teachers:[],attendance:[],marks:[],notifications:[]};
+  const changes=tableSpecs.map(spec=>{
+   const now=db[spec.key]||[],before=previous[spec.key]||[],oldById=new Map(before.map(x=>[x.id,x]));
+   for(const rec of now)if(!rec.id)rec.id=crypto.randomUUID();
+   const currentIds=new Set(now.map(x=>x.id));
+   return {spec,changed:now.filter(rec=>!oldById.has(rec.id)||JSON.stringify(oldById.get(rec.id))!==JSON.stringify(rec)).map(spec.row),removed:before.filter(x=>!currentIds.has(x.id)).map(x=>x.id)};
+  });
+  // Delete dependent records before parent rows to avoid foreign-key conflicts.
+  for(const item of changes){
+   if(item.changed.length){const {error}=await sb.from(item.spec.table).upsert(item.changed);if(error)throw error}
+  }
+  for(const item of [...changes].reverse()){
+   if(item.removed.length){const {error}=await sb.from(item.spec.table).delete().in('id',item.removed);if(error)throw error}
+  }
 }
 async function save(){render();if(!currentUser)return;try{await syncCloud();cloudSnapshot=cloneData(db);render()}catch(e){console.error('Cloud save failed',e);alert('تعذّر حفظ التغييرات سحابياً. تأكد من اتصال الإنترنت، ولا تغلق الصفحة قبل إعادة المحاولة. تفاصيل الخطأ: '+(e.message||'غير متاحة'))}}
 async function loadCloudData(user){
