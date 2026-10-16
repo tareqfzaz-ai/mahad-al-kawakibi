@@ -104,7 +104,7 @@ async function authAction(mode){
  const msg=el('authMessage');msg.textContent='جارٍ الاتصال...';
  try{
   if(mode==='signup'){
-   const {data,error}=await sb.auth.signUp({email,password});
+   const {data,error}=await sb.auth.signUp({email,password,options:{emailRedirectTo:window.location.origin+window.location.pathname}});
    if(error)throw error;
    if(data.session&&data.user){await loadCloudData(data.user);msg.textContent='تم إنشاء الحساب وتسجيل الدخول.'}
    else msg.textContent='تم إرسال طلب إنشاء الحساب. إذا طلب منك تأكيد البريد، افتح رسالة Supabase ثم ارجع وسجّل الدخول.';
