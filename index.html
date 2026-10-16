@@ -24,69 +24,43 @@ main.wrap{padding:0 14px 20px!important}.warning{background:linear-gradient(120d
 @media(max-width:650px){header{padding:23px 14px 26px}.brand{gap:11px}.logo{width:53px;height:53px;font-size:26px;border-radius:15px}h1{font-size:21px}.school-art{grid-template-columns:1fr;gap:8px}.art-card{padding:12px}.stats{gap:7px}.stat{padding:12px 9px}.stat strong{font-size:22px}.stat small{font-size:11px}.tabs{flex-wrap:nowrap;overflow-x:auto;scrollbar-width:thin;padding:6px}.tabs button{white-space:nowrap;font-size:12px;padding:10px}.gridform{grid-template-columns:1fr}.panel{padding:14px 11px}th,td{padding:9px 6px;font-size:12px}}
 @media print{header,.tabs,.warning,.school-art,.notice,.stats,footer,button{display:none!important}body{background:#fff}.panel{box-shadow:none;border:0}}
 
-/* واجهة عصرية جديدة لمعهد الكواكبي */
-:root{--navy:#102a56;--navy2:#164e83;--blue:#2563eb;--gold:#f59e0b;--gold2:#fbbf24;--bg:#f2f6fc;--ink:#172b4d;--muted:#64748b;--line:#dce5f1;--white:#ffffff}
-body{background:radial-gradient(ellipse at top left,#e0f2fe 0%,#f5f8ff 38%,#eef2ff 100%);color:var(--ink)}
-header{background:linear-gradient(125deg,#0f2452 0%,#155e9a 58%,#0e7490 100%);border-bottom:5px solid #fbbf24;padding:30px 16px 34px;box-shadow:0 12px 35px #173b6b2b}
-header:before{border-color:#ffffff30;box-shadow:0 0 0 18px #ffffff0a,0 0 0 38px #ffffff08}
-.logo{border:2px solid #fcd34d;border-radius:20px;background:linear-gradient(145deg,#ffffff24,#ffffff08);color:#fff1b8;box-shadow:0 0 0 6px #ffffff12,inset 0 0 18px #ffffff16}
-h1{font-size:clamp(22px,4vw,30px);text-shadow:0 2px 10px #06152d45}
-header p{color:#e5f3ff}
-main.wrap{padding:0 14px 26px!important}
-.warning{background:linear-gradient(120deg,#fff7df,#ffffff);border:1px solid #f5d58b;color:#80520b;border-radius:17px;box-shadow:0 8px 24px #a1620710}
-.school-art{gap:14px;margin:20px 0}
-.art-card{background:linear-gradient(145deg,#ffffff,#f3f8ff);border:1px solid #d8e5f5;border-radius:20px;padding:17px 14px;color:#18345b;box-shadow:0 10px 25px #1d4e8910;transition:transform .2s,box-shadow .2s}
-.art-card:hover{transform:translateY(-3px);box-shadow:0 14px 28px #1d4e891b}
-.art-card:after{border-color:#60a5fa38}
-.art-card svg{background:linear-gradient(145deg,#e0f2fe,#eff6ff);border:1px solid #bfdbfe}
-.art-card small{color:#64748b}
-.notice{border:1px solid #b9e6f4;background:linear-gradient(120deg,#ecfeff,#fff);border-radius:17px;color:#164e63;box-shadow:0 8px 24px #0891b20c}
-.notice>b{color:#0e7490}
-.stats{gap:14px;margin:18px 0}
-.stat,.panel{background:#fff;border:1px solid #dce6f3;border-radius:20px;box-shadow:0 10px 28px #1e3a5f0d}
-.stat{border-top:4px solid #3b82f6}
-.stat:nth-child(2){border-top-color:#14b8a6}
-.stat:nth-child(3){border-top-color:#f59e0b}
-.stat:after{border-color:#60a5fa25}
-.stat small{color:#64748b}
-.stat strong{color:#174ea6;font-size:30px}
-.tabs{gap:8px;margin:20px 0;padding:8px;background:#e8eef8;border:1px solid #d8e2f0;border-radius:17px}
-.tabs button,button{border-radius:12px;padding:11px 14px;background:#fff;color:#23446c;border:1px solid #d5e0ef;box-shadow:0 3px 8px #1e3a5f08}
-.tabs button:hover,button:hover{transform:translateY(-2px);box-shadow:0 8px 18px #1e3a5f14}
-.tabs button.active,.primary{background:linear-gradient(135deg,#1d4ed8,#0e7490);color:#fff;border-color:transparent;box-shadow:0 6px 15px #1d4ed82c}
-.panel{padding:21px}
-.panel h2{color:#174ea6;border-bottom:1px solid #e1eaf5;padding-bottom:13px;font-size:20px}
-.auth-card{background:linear-gradient(145deg,#fff,#f5f9ff);border:1px solid #c6d8f0;border-radius:24px;box-shadow:0 18px 45px #1e3a5f18;color:#172b4d}
-.auth-card h2{color:#174ea6}
-.auth-card p{color:#64748b}
-.auth-card label{color:#334e72}
-.session-bar{background:#fff;border:1px solid #dce6f3;border-radius:15px;color:#23446c;box-shadow:0 5px 16px #1e3a5f08}
-input,select,textarea{border:1px solid #d5e0ef;border-radius:12px;background:#fbfdff;color:#172b4d}
-input:focus,select:focus,textarea:focus{border-color:#3b82f6;box-shadow:0 0 0 4px #3b82f61c}
-label{color:#526780}
-table{border-spacing:0 3px}
-th{color:#fff;background:#174ea6}
-td{border-bottom:1px solid #e5edf6}
-tbody tr:hover{background:#eff6ff}
-.tablewrap{border:1px solid #dce6f3;border-radius:15px;background:#fff}
-.empty{color:#64748b}
-.subtle{color:#64748b}
-.danger{background:#fff1f2;color:#be123c;border-color:#fecdd3}
-.edit{background:#fff7ed;color:#9a3412;border-color:#fed7aa}
-footer{background:linear-gradient(125deg,#0f2452,#155e9a,#0e7490);border-top:4px solid #fbbf24;color:#e5f3ff}
-@media(max-width:650px){
- header{padding:24px 14px 28px}
- .school-art{grid-template-columns:1fr;gap:10px}
- .art-card{padding:14px;border-radius:17px}
- .stats{gap:8px}
- .stat{padding:13px 9px;border-radius:16px}
- .stat strong{font-size:24px}
- .tabs{background:#e8eef8;scrollbar-color:#94a3b8 transparent}
- .tabs button{border-radius:11px}
- .panel{padding:16px 12px;border-radius:18px}
- .auth-card{margin:18px auto;padding:18px;border-radius:20px}
-}
-
+/* تصميم موحّد كحلي وذهبي — تطبيق معهد الكواكبي */
+:root{--navy:#06152d;--navy2:#102b52;--blue:#173f6c;--gold:#d8b15a;--gold2:#ffe39a;--bg:#071326;--ink:#f7f2e5;--muted:#bdc8d8;--line:#30445f;--white:#0d2039}
+html{scroll-behavior:smooth}
+body{background:radial-gradient(ellipse at top,#17365f 0%,#091a32 45%,#030916 100%);color:var(--ink);font-family:Tahoma,Arial,sans-serif}
+header{background:linear-gradient(135deg,#041126 0%,#102b52 58%,#174777 100%);color:#fff;padding:28px 16px 32px;border-bottom:4px solid var(--gold);box-shadow:0 10px 30px #0007}
+header:before{content:"";position:absolute;width:240px;height:240px;border:1px solid #d8b15a38;border-radius:50%;left:-90px;top:-135px;box-shadow:0 0 0 18px #d8b15a0a,0 0 0 38px #d8b15a08}
+header:after{content:"";position:absolute;width:150px;height:150px;border:1px solid #f3d98d45;border-radius:50%;right:-90px;bottom:-105px}
+.brand{display:flex;align-items:center;gap:14px;position:relative;z-index:1}.logo{width:60px;height:60px;border:2px solid var(--gold);border-radius:18px;display:grid;place-items:center;font-size:30px;color:var(--gold2);background:linear-gradient(145deg,#173d68,#071a35);box-shadow:0 0 0 5px #d8b15a16,inset 0 0 15px #d8b15a16}
+h1{font-size:clamp(22px,4vw,30px);letter-spacing:.1px;margin:0 0 7px;color:#fff;text-shadow:0 2px 10px #0005}header p{margin:5px 0;color:#e2eaf6;font-size:13px;line-height:1.7}
+main.wrap{padding:0 14px 24px!important}
+.warning{background:linear-gradient(120deg,#fff8e6,#fffdf7);border:1px solid #e8ce8b;color:#6c5018;padding:13px 15px;border-radius:14px;margin:18px 0;font-size:13px;line-height:1.9;box-shadow:0 5px 18px #0002}
+.school-art{display:grid;grid-template-columns:repeat(3,minmax(0,1fr));gap:12px;margin:18px 0}
+.art-card{position:relative;overflow:hidden;background:linear-gradient(145deg,#112947,#09172a);border:1px solid #b58a32;border-radius:16px;padding:15px 12px;display:flex;align-items:center;gap:11px;color:#fff2d0;font-size:13px;box-shadow:0 6px 24px #0005;min-width:0}
+.art-card:after{content:"";position:absolute;left:-25px;bottom:-35px;width:90px;height:90px;border:1px solid #d8b15a42;border-radius:50%}
+.art-card svg{width:39px;height:39px;flex:none;background:#202d3e;border:1px solid #d8b15a;border-radius:12px;padding:3px}.art-card b{display:block;margin-bottom:4px}.art-card small{color:#c0cad8;font-size:11px}
+.notice{border:1px solid #d8b15a;background:linear-gradient(120deg,#fff9e9,#fffdf8);color:#6c5018;border-radius:15px;padding:14px 15px;margin:14px 0;line-height:1.9;box-shadow:0 5px 18px #0002}.notice>b{color:#74551a}
+.stats{display:grid;grid-template-columns:repeat(3,minmax(0,1fr));gap:12px;margin:16px 0}
+.stat,.panel{background:linear-gradient(145deg,#10243e,#0a192d);border:1px solid #31445f;border-radius:17px;padding:17px;box-shadow:0 7px 24px #0003}
+.stat{position:relative;overflow:hidden;border-top:3px solid var(--gold)}.stat:after{content:"";position:absolute;width:65px;height:65px;border:1px solid #d8b15a35;border-radius:50%;left:-25px;bottom:-35px}.stat small{color:#bdc8d7;font-size:12px}.stat strong{display:block;font-size:27px;color:var(--gold2);margin-top:8px}
+.tabs{display:flex;gap:8px;flex-wrap:wrap;margin:17px 0;padding:7px;background:#09172b;border:1px solid #31445f;border-radius:15px}
+.tabs button,button{font:inherit;cursor:pointer;border:1px solid #3a4e69;border-radius:10px;padding:10px 13px;background:linear-gradient(145deg,#172d49,#0e2038);color:#f8e8bd;transition:transform .15s,box-shadow .15s,background .15s}
+.tabs button:hover,button:hover{transform:translateY(-1px);box-shadow:0 4px 12px #0004}.tabs button.active,.primary{background:linear-gradient(135deg,#06152d,#173f6c);color:#ffe39a;border-color:#e4b84f;box-shadow:0 4px 12px #0004}
+.panel h2{font-size:18px;margin:0 0 16px;color:var(--gold2);padding-bottom:10px;border-bottom:1px solid #31445f}
+.auth-card{max-width:560px;margin:22px auto;padding:22px;background:linear-gradient(145deg,#10243e,#08172b);border:1px solid #b58a32;border-radius:20px;box-shadow:0 15px 36px #0007;color:var(--ink);position:relative;overflow:hidden}
+.auth-card:before{content:"✦";display:grid;place-items:center;width:58px;height:58px;margin:0 auto 14px;border:2px solid var(--gold);border-radius:18px;background:linear-gradient(145deg,#173d68,#071a35);color:var(--gold2);font-size:30px;box-shadow:0 0 0 5px #d8b15a12}
+.auth-card h2{color:var(--gold2);margin:0 0 10px;text-align:center}.auth-card p{font-size:13px;line-height:1.9;color:var(--muted);text-align:center}
+.auth-card label{color:#e1e8f2;text-align:right}.auth-card input{color:#f8fafc;background:#07162a;border-color:#40536d}
+.auth-actions{display:flex;gap:8px;flex-wrap:wrap;margin-top:8px}.auth-actions button{flex:1;min-width:140px;min-height:46px}
+.session-bar{display:flex;justify-content:space-between;align-items:center;gap:10px;flex-wrap:wrap;padding:10px 13px;margin:16px 0;background:#0c1c31;border:1px solid #31445f;border-radius:12px;font-size:12px;color:#e7d9b3}
+[hidden]{display:none!important}.toolbar{display:flex;gap:8px;flex-wrap:wrap;margin-bottom:13px}.toolbar input{flex:1;min-width:140px}
+input,select,textarea{width:100%;padding:12px;border:1px solid #d4dce7;border-radius:10px;background:#fff;font:inherit;color:#18283d;margin:5px 0 11px;outline:none;transition:border .15s,box-shadow .15s}
+input:focus,select:focus,textarea:focus{border-color:#c8a34f;box-shadow:0 0 0 3px #d8b15a20}label{display:block;font-size:13px;color:#d8e0ec}
+.gridform{display:grid;grid-template-columns:repeat(2,minmax(0,1fr));gap:9px}
+table{width:100%;border-collapse:separate;border-spacing:0;font-size:13px}th,td{padding:11px 8px;border-bottom:1px solid var(--line);text-align:right}th{color:#ffe5a1;background:#172b45;font-weight:700}tbody tr:hover{background:#17263a}td button{padding:7px 9px;margin:2px}.tablewrap{overflow-x:auto;border:1px solid var(--line);border-radius:12px}.empty{text-align:center;color:var(--muted);padding:28px 8px}.subtle{color:var(--muted);font-size:12px;line-height:1.8}.danger{background:#491d28;color:#ffd9d9;border-color:#9e4a53}.edit{background:#4a3a17;color:#ffe39a;border-color:#d8b15a}.actions{display:flex;flex-wrap:wrap;gap:4px}hr{border-color:var(--line)!important}
+footer{background:linear-gradient(135deg,#06152d,#102b52);border-top:3px solid var(--gold);text-align:center;padding:22px;color:#e9dfc5;font-size:12px;margin-top:18px}
+@media(max-width:650px){header{padding:23px 14px 26px}.brand{gap:11px}.logo{width:53px;height:53px;font-size:26px;border-radius:15px}h1{font-size:21px}.school-art{grid-template-columns:1fr;gap:8px}.art-card{padding:12px}.stats{gap:7px}.stat{padding:12px 9px}.stat strong{font-size:22px}.stat small{font-size:11px}.tabs{flex-wrap:nowrap;overflow-x:auto;scrollbar-width:thin;padding:6px}.tabs button{white-space:nowrap;font-size:12px;padding:10px}.gridform{grid-template-columns:1fr}.panel{padding:14px 11px}.auth-card{padding:18px;margin:18px auto}.auth-actions button{min-height:46px}th,td{padding:9px 6px;font-size:12px}}
+@media print{header,.tabs,.warning,.school-art,.notice,.stats,footer,button{display:none!important}body{background:#fff;color:#111}.panel{box-shadow:none;border:0}.auth-card{display:none!important}}
 </style><script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
 </head>
 <body>
