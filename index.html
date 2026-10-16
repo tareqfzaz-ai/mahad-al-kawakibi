@@ -129,7 +129,7 @@ const SUPABASE_URL='https://biijasezczuqrowomimz.supabase.co';
 const SUPABASE_PUBLISHABLE_KEY='sb_publishable_gyd5exQAFhMdzDpbP0CF3Q_XlciM_OU';
 const sb=window.supabase.createClient(SUPABASE_URL,SUPABASE_PUBLISHABLE_KEY);
 let db={students:[],teachers:[],attendance:[],marks:[],notifications:[]};
-let currentUser=null,cloudSnapshot=null,tab='students';
+let currentUser=null,cloudSnapshot=null,tab='students',currentRole='pending',profileRows=[];
 function cloneData(v){return JSON.parse(JSON.stringify(v))}
 function notifyArrival(studentId,date,time){const st=db.students.find(x=>x.id===studentId);if(!st)return;db.notifications=db.notifications||[];db.notifications.unshift({id:crypto.randomUUID(),student:st.name,date,time});db.notifications=db.notifications.slice(0,30)}
 const tableSpecs=[
@@ -148,7 +148,9 @@ async function syncCloud(){
   // are picked up by the next queued save instead of being mistaken as saved.
   const target=cloneData(db);
   const previous=cloudSnapshot||{students:[],teachers:[],attendance:[],marks:[],notifications:[]};
-  const changes=tableSpecs.map(spec=>{
+  const allowedSpecs=currentRole==='manager'?tableSpecs:(currentRole==='teacher'?tableSpecs.filter(s=>['attendance','marks'].includes(s.key)):[]);
+  if(currentRole==='parent'||currentRole==='pending')return;
+  const changes=allowedSpecs.map(spec=>{
    const now=target[spec.key]||[],before=previous[spec.key]||[],oldById=new Map(before.map(x=>[x.id,x]));
    const currentIds=new Set(now.map(x=>x.id));
    return {spec,changed:now.filter(rec=>!oldById.has(rec.id)||JSON.stringify(oldById.get(rec.id))!==JSON.stringify(rec)).map(spec.row),removed:before.filter(x=>!currentIds.has(x.id)).map(x=>x.id)};
@@ -175,25 +177,33 @@ async function save(){
 }
 async function loadCloudData(user){
  currentUser=user;
+ const pr=await sb.from('user_profiles').select('user_id,role,display_name,email').eq('user_id',user.id).maybeSingle();
+ if(pr.error)throw pr.error;
+ if(!pr.data)throw new Error('لم يتم إعداد صلاحيات الحساب. تواصل مع مدير المعهد.');
+ currentRole=pr.data.role; profileRows=[];
  const results=await Promise.all([
   sb.from('students').select('*').order('created_at'),
-  sb.from('teachers').select('*').order('created_at'),
+  currentRole==='manager'?sb.from('teachers').select('*').order('created_at'):Promise.resolve({data:[],error:null}),
   sb.from('attendance').select('*').order('created_at'),
   sb.from('marks').select('*').order('created_at'),
   sb.from('notifications').select('*').order('created_at')
  ]);
  for(const result of results)if(result.error)throw result.error;
  db={
-  students:results[0].data.map(r=>({id:r.id,name:r.name,grade:r.grade,guardian:r.guardian,phone:r.phone})),
-  teachers:results[1].data.map(r=>({id:r.id,name:r.name,subject:r.subject,phone:r.phone})),
-  attendance:results[2].data.map(r=>({id:r.id,student:r.student_id,date:r.date,status:r.status,in:r.in_time,out:r.out_time})),
-  marks:results[3].data.map(r=>({id:r.id,student:r.student_id,subject:r.subject,kind:r.kind,score:r.score,date:r.date,note:r.note})),
-  notifications:results[4].data.map(r=>({id:r.id,student:r.student,date:r.date,time:r.time}))
+  students:(results[0].data||[]).map(r=>({id:r.id,name:r.name,grade:r.grade,guardian:r.guardian,phone:r.phone})),
+  teachers:(results[1].data||[]).map(r=>({id:r.id,name:r.name,subject:r.subject,phone:r.phone})),
+  attendance:(results[2].data||[]).map(r=>({id:r.id,student:r.student_id,date:r.date,status:r.status,in:r.in_time,out:r.out_time})),
+  marks:(results[3].data||[]).map(r=>({id:r.id,student:r.student_id,subject:r.subject,kind:r.kind,score:r.score,date:r.date,note:r.note})),
+  notifications:(results[4].data||[]).map(r=>({id:r.id,student:r.student,date:r.date,time:r.time}))
  };
+ if(currentRole==='manager'){
+  const p=await sb.from('user_profiles').select('user_id,role,display_name,email').order('created_at');
+  if(p.error)throw p.error;profileRows=p.data||[];
+ }
  cloudSnapshot=cloneData(db);
- el('userEmail').textContent=user.email||'حساب الإدارة';
+ el('userEmail').textContent=(user.email||'')+' — '+({manager:'المدير',teacher:'الأستاذ',parent:'ولي الأمر',pending:'بانتظار التفعيل'}[currentRole]||'');
  el('authGate').hidden=true;el('appMain').hidden=false;
- render();
+ configureRoleUI();render();
 }
 async function authAction(mode,formId){
  const form=el(formId),f=new FormData(form),email=String(f.get('email')||'').trim(),password=String(f.get('password')||'');
@@ -219,10 +229,39 @@ el('showSignup').addEventListener('click',()=>{el('loginPage').hidden=true;el('s
 el('backToLogin').addEventListener('click',()=>{el('signupPage').hidden=true;el('loginPage').hidden=false});
 el('logoutButton').addEventListener('click',async()=>{const {error}=await sb.auth.signOut();if(error){alert('تعذر تسجيل الخروج: '+error.message);return}currentUser=null;cloudSnapshot=null;db={students:[],teachers:[],attendance:[],marks:[],notifications:[]};el('appMain').hidden=true;el('authGate').hidden=false;el('authMessage').textContent='تم تسجيل الخروج بأمان.'});
 async function initAuth(){const {data,error}=await sb.auth.getSession();if(error){el('authMessage').textContent='تعذّر فحص جلسة الدخول: '+error.message;return}if(data.session){try{await loadCloudData(data.session.user)}catch(e){console.error(e);el('authGate').hidden=false;el('appMain').hidden=true;el('authMessage').textContent='تعذّر تحميل بيانات السحابة: '+(e.message||'تحقق من الاتصال.')}}else{el('authGate').hidden=false;el('appMain').hidden=true}}
-function esc(s){return String(s??'').replace(/[&<>"']/g,c=>({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[c]))}function today(){return new Date().toISOString().slice(0,10)}function el(id){return document.getElementById(id)}function setTab(t){tab=t;document.querySelectorAll('#tabs button').forEach(b=>b.classList.toggle('active',b.dataset.tab===t));render()}
+function esc(s){return String(s??'').replace(/[&<>"']/g,c=>({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[c]))}function today(){return new Date().toISOString().slice(0,10)}function el(id){return document.getElementById(id)}function setTab(t){const b=el('tabs').querySelector('[data-tab="'+t+'"]');if(!b||b.hidden)return;tab=t;document.querySelectorAll('#tabs button').forEach(x=>x.classList.toggle('active',x.dataset.tab===t));render()}
 el('tabs').addEventListener('click',e=>{const b=e.target.closest('button[data-tab]');if(b)setTab(b.dataset.tab)});
+function renderParentView(){
+ const v=el('view');
+ const opts=db.students.map(s=>'<option value="'+esc(s.id)+'">'+esc(s.name)+' — '+esc(s.grade||'')+'</option>').join('');
+ v.innerHTML='<h2>متابعة أولادي</h2><p>هذه البيانات تخص الطلاب المرتبطين بحسابك فقط.</p>'+(db.students.length?'<label>اختر الطالب<select id="parentStudent">'+opts+'</select></label><div id="parentDetails"></div>':'<p>لا يوجد طالب مرتبط بحسابك بعد. تواصل مع إدارة المعهد لربط حسابك بأبنائك.');
+ const show=()=>{const id=el('parentStudent')?.value;if(!id)return;const s=db.students.find(x=>x.id===id);if(!s)return;const aa=db.attendance.filter(a=>a.student===id).slice().reverse();const mm=db.marks.filter(m=>m.student===id).slice().reverse();el('parentDetails').innerHTML='<h3>الحضور والغياب</h3><div class="tablewrap"><table><thead><tr><th>التاريخ</th><th>الحالة</th><th>الدخول</th><th>الخروج</th></tr></thead><tbody>'+aa.map(a=>'<tr><td>'+esc(a.date)+'</td><td>'+esc(a.status)+'</td><td>'+esc(a.in||'—')+'</td><td>'+esc(a.out||'—')+'</td></tr>').join('')+'</tbody></table></div><h3>العلامات والملاحظات</h3><div class="tablewrap"><table><thead><tr><th>المادة</th><th>التقييم</th><th>العلامة</th><th>التاريخ</th><th>ملاحظة</th></tr></thead><tbody>'+mm.map(m=>'<tr><td>'+esc(m.subject)+'</td><td>'+esc(m.kind)+'</td><td>'+esc(m.score)+'/100</td><td>'+esc(m.date)+'</td><td>'+esc(m.note||'—')+'</td></tr>').join('')+'</tbody></table></div><p><b>الصف:</b> '+esc(s.grade||'—')+'</p>'};
+ if(db.students.length){show();el('parentStudent').addEventListener('change',show)}
+}
+function renderPermissions(){
+ const v=el('view');
+ const opts=profileRows.map(p=>'<option value="'+esc(p.user_id)+'">'+esc(p.email||p.user_id)+' — '+esc(p.role)+'</option>').join('');
+ const students=db.students.map(s=>'<option value="'+esc(s.id)+'">'+esc(s.name)+' — '+esc(s.grade||'')+'</option>').join('');
+ v.innerHTML='<h2>إدارة الحسابات والصلاحيات</h2><p>أي حساب جديد يبدأ كولي أمر، ويمكنك تحديد دوره وربط الطلاب به.</p><form id="roleForm"><label>الحساب<select name="user_id" required>'+opts+'</select></label><label>الصلاحية<select name="role"><option value="parent">ولي أمر</option><option value="teacher">أستاذ</option><option value="manager">مدير</option><option value="pending">تعليق الحساب</option></select></label><button class="primary">حفظ الصلاحية</button></form><hr><h3>ربط طالب بحساب ولي الأمر</h3><form id="guardianLinkForm"><label>حساب ولي الأمر<select name="user_id" required>'+opts+'</select></label><label>الطالب<select name="student_id" required>'+students+'</select></label><button class="primary">ربط ولي الأمر بالطالب</button></form><hr><h3>تعيين الطلاب للأستاذ</h3><form id="teacherLinkForm"><label>حساب الأستاذ<select name="user_id" required>'+opts+'</select></label><label>الطالب<select name="student_id" required>'+students+'</select></label><label>المادة (اختياري)<input name="subject"></label><button class="primary">تعيين الطالب للأستاذ</button></form><p id="permissionMessage" role="status"></p><p class="subtle">دعوة البريد الإلكتروني تُرسل من إعدادات Auth في Supabase؛ هذه الصفحة تدير الحسابات التي سجّلت بالفعل. لن يتمكن المستخدم من رؤية بيانات قبل ربطه بالطلاب.</p>';
+ el('roleForm').addEventListener('submit',async e=>{e.preventDefault();const f=new FormData(e.target);const role=f.get('role'),id=f.get('user_id');if(id===currentUser.id&&role!=='manager'){alert('لا يمكن سحب صلاحية المدير من حساب الجلسة الحالية.');return}const {error}=await sb.from('user_profiles').update({role}).eq('user_id',id);el('permissionMessage').textContent=error?'فشل تحديث الصلاحية: '+error.message:'تم تحديث الصلاحية. سيحتاج المستخدم إلى تسجيل الدخول مجدداً.';if(!error){const p=await sb.from('user_profiles').select('user_id,role,display_name,email').order('created_at');if(!p.error)profileRows=p.data||[];renderPermissions()}});
+ el('guardianLinkForm').addEventListener('submit',async e=>{e.preventDefault();const f=new FormData(e.target);const {error}=await sb.from('student_guardians').upsert({guardian_user_id:f.get('user_id'),student_id:f.get('student_id')});el('permissionMessage').textContent=error?'فشل الربط: '+error.message:'تم ربط الطالب بحساب ولي الأمر.'});
+ el('teacherLinkForm').addEventListener('submit',async e=>{e.preventDefault();const f=new FormData(e.target);const {error}=await sb.from('teacher_student_assignments').upsert({teacher_user_id:f.get('user_id'),student_id:f.get('student_id'),subject:String(f.get('subject')||'')});el('permissionMessage').textContent=error?'فشل التعيين: '+error.message:'تم تعيين الطالب للأستاذ.'});
+}
+function configureRoleUI(){
+ const nav=el('tabs');nav.querySelectorAll('button').forEach(b=>b.hidden=true);
+ if(currentRole==='manager'){nav.querySelectorAll('button').forEach(b=>b.hidden=false);if(!nav.querySelector('[data-tab="permissions"]'))nav.insertAdjacentHTML('beforeend','<button data-tab="permissions">الحسابات والصلاحيات</button>');nav.querySelector('[data-tab="permissions"]').hidden=false;}
+ else if(currentRole==='teacher'){['attendance','marks','reports'].forEach(t=>{const b=nav.querySelector('[data-tab="'+t+'"]');if(b)b.hidden=false});}
+ else if(currentRole==='parent'){if(!nav.querySelector('[data-tab="parent"]'))nav.insertAdjacentHTML('beforeend','<button data-tab="parent">متابعة أولادي</button>');nav.querySelector('[data-tab="parent"]').hidden=false;tab='parent';}
+ else {tab='pending';}
+}
 function studentOptions(){return db.students.map(s=>'<option value="'+esc(s.id)+'">'+esc(s.name)+'</option>').join('')}
-function render(){const ns=db.notifications||[];const nt=el('noticeText');if(nt)nt.innerHTML=ns.length?ns.slice(0,3).map(n=>'🔔 تم تسجيل وصول <b>'+esc(n.student)+'</b> بتاريخ '+esc(n.date)+' — '+esc(n.time||'وقت غير محدد')).join('<br>'):'عند تسجيل وصول طالب سيظهر التنبيه هنا.';el('studentCount').textContent=db.students.length;el('teacherCount').textContent=db.teachers.length;el('attendanceCount').textContent=db.attendance.filter(a=>a.date===today()).length;let v=el('view');
+function render(){
+ const v=el('view');
+ if(currentRole==='pending'){v.innerHTML='<h2>الحساب بانتظار التفعيل</h2><p>تم إنشاء الحساب، لكن يلزم أن يفعّله مدير معهد الكواكبي ويحدد صلاحياته قبل عرض بيانات الطلاب.</p>';return}
+ if(currentRole==='parent'){renderParentView();return}
+ if(currentRole==='teacher' && !['attendance','marks','reports'].includes(tab))tab='attendance';
+ if(currentRole==='manager' && tab==='permissions'){renderPermissions();return}
+ const ns=db.notifications||[];const nt=el('noticeText');if(nt)nt.innerHTML=ns.length?ns.slice(0,3).map(n=>'🔔 تم تسجيل وصول <b>'+esc(n.student)+'</b> بتاريخ '+esc(n.date)+' — '+esc(n.time||'وقت غير محدد')).join('<br>'):'عند تسجيل وصول طالب سيظهر التنبيه هنا.';el('studentCount').textContent=db.students.length;el('teacherCount').textContent=db.teachers.length;el('attendanceCount').textContent=db.attendance.filter(a=>a.date===today()).length;let v=el('view');
 if(tab==='students')v.innerHTML='<h2>إدارة الطلاب</h2><form id="studentForm"><div class="gridform"><label>اسم الطالب<input name="name" required></label><label>الصف / الشعبة<input name="grade"></label><label>اسم ولي الأمر<input name="guardian"></label><label>هاتف ولي الأمر<input name="phone" inputmode="tel"></label></div><button class="primary">إضافة طالب</button></form><hr style="border:0;border-top:1px solid var(--line);margin:18px 0"><div class="toolbar"><input id="studentSearch" placeholder="ابحث عن طالب أو صف..."></div><div class="tablewrap"><table><thead><tr><th>الاسم</th><th>الصف</th><th>ولي الأمر</th><th>إجراء</th></tr></thead><tbody id="studentRows"></tbody></table></div>';
 else if(tab==='attendance')v.innerHTML='<h2>الحضور والغياب</h2><form id="attendanceForm"><div class="gridform"><label>الطالب<select name="student" required>'+studentOptions()+'</select></label><label>التاريخ<input name="date" type="date" value="'+today()+'" required></label><label>الحالة<select name="status"><option>حاضر</option><option>غائب</option><option>متأخر</option></select></label><label>وقت الدخول<input name="in" type="time"></label><label>وقت الخروج<input name="out" type="time"></label></div><button class="primary">حفظ سجل الحضور</button></form><h2 style="margin-top:22px">السجلات الأخيرة</h2><div class="tablewrap"><table><thead><tr><th>التاريخ</th><th>الطالب</th><th>الحالة</th><th>الدخول</th><th>الخروج</th></tr></thead><tbody>'+db.attendance.slice().reverse().map(a=>'<tr><td>'+esc(a.date)+'</td><td>'+esc((db.students.find(s=>s.id===a.student)||{}).name||'طالب محذوف')+'</td><td>'+esc(a.status)+'</td><td>'+esc(a.in||'—')+'</td><td>'+esc(a.out||'—')+'</td></tr>').join('')+'</tbody></table></div>';
 else if(tab==='marks')v.innerHTML='<h2>العلامات والمذاكرات</h2><form id="markForm"><div class="gridform"><label>الطالب<select name="student" required>'+studentOptions()+'</select></label><label>المادة<input name="subject" required></label><label>نوع التقييم<select name="kind"><option>مذاكرة أسبوعية</option><option>مذاكرة نصفية</option><option>امتحان شهري</option><option>امتحان فصلي</option></select></label><label>العلامة من 100<input name="score" type="number" min="0" max="100" required></label><label>التاريخ<input name="date" type="date" value="'+today()+'" required></label><label>ملاحظات<input name="note"></label></div><button class="primary">حفظ العلامة</button></form><h2 style="margin-top:22px">سجل العلامات</h2><div class="tablewrap"><table><thead><tr><th>الطالب</th><th>المادة</th><th>التقييم</th><th>العلامة</th><th>التاريخ</th></tr></thead><tbody>'+db.marks.slice().reverse().map(m=>'<tr><td>'+esc((db.students.find(s=>s.id===m.student)||{}).name||'طالب محذوف')+'</td><td>'+esc(m.subject)+'</td><td>'+esc(m.kind)+'</td><td>'+esc(m.score)+'/100</td><td>'+esc(m.date)+'</td></tr>').join('')+'</tbody></table></div>';
