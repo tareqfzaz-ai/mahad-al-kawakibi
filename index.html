@@ -89,8 +89,8 @@ footer{background:linear-gradient(135deg,#06152d,#102b52);border-top:3px solid v
 <header><div class="wrap"><div class="brand"><div class="logo">✦</div><div><h1>معهد الكواكبي</h1><p>بإدارة الأستاذ عبد القادر رشيد</p><p>الكادر التدريسي المميز بحلب</p><p>حلب، الموكامبو، جانب مشفى الأجّاتي</p></div></div></div></header>
 <section id="authGate" class="auth-card wrap">
 <div id="loginPage">
-<h2>تسجيل الدخول</h2>
-<p>أهلاً بك في نظام إدارة معهد الكواكبي. سجّل الدخول للمتابعة.</p>
+<h2 id="loginHeading">تسجيل الدخول</h2>
+<p id="loginIntro">أهلاً بك في نظام إدارة معهد الكواكبي. سجّل الدخول للمتابعة.</p>
 <form id="authForm">
 <label>البريد الإلكتروني<input name="email" type="email" autocomplete="username" placeholder="أدخل بريدك الإلكتروني" required></label>
 <label>كلمة المرور<input name="password" type="password" autocomplete="current-password" minlength="6" placeholder="أدخل كلمة المرور" required></label>
@@ -100,8 +100,8 @@ footer{background:linear-gradient(135deg,#06152d,#102b52);border-top:3px solid v
 <div class="auth-switch"><span>ليس لديك حساب؟</span><button id="showSignup" type="button">إنشاء حساب جديد</button></div>
 </div>
 <div id="signupPage" hidden>
-<h2>إنشاء حساب جديد</h2>
-<p>أنشئ حساباً منفصلاً للوصول إلى نظام إدارة الطلاب.</p>
+<h2 id="signupHeading">إنشاء حساب جديد</h2>
+<p id="signupIntro">أنشئ حساباً منفصلاً للوصول إلى نظام إدارة الطلاب.</p>
 <form id="signupForm">
 <label>البريد الإلكتروني<input name="email" type="email" autocomplete="username" placeholder="أدخل بريدك الإلكتروني" required></label>
 <label>كلمة المرور<input name="password" type="password" autocomplete="new-password" minlength="6" placeholder="6 أحرف على الأقل" required></label>
@@ -126,6 +126,7 @@ footer{background:linear-gradient(135deg,#06152d,#102b52);border-top:3px solid v
 <script>
 const LEGACY_KEY='kawakibi_demo_v1';
 const SUPABASE_URL='https://biijasezczuqrowomimz.supabase.co';
+const PARTNER_APP=new URLSearchParams(window.location.search).get('app')==='partner';
 const SUPABASE_PUBLISHABLE_KEY='sb_publishable_gyd5exQAFhMdzDpbP0CF3Q_XlciM_OU';
 const sb=window.supabase.createClient(SUPABASE_URL,SUPABASE_PUBLISHABLE_KEY);
 let db={students:[],teachers:[],attendance:[],marks:[],notifications:[]};
@@ -212,7 +213,7 @@ async function authAction(mode,formId){
  msg.textContent='جارٍ الاتصال...';
  try{
   if(mode==='signup'){
-   const {data,error}=await sb.auth.signUp({email,password,options:{emailRedirectTo:window.location.origin+window.location.pathname}});
+   const {data,error}=await sb.auth.signUp({email,password,options:{data:PARTNER_APP?{app_role:'partner'}:{},emailRedirectTo:window.location.origin+window.location.pathname}});
    if(error)throw error;
    if(data.session&&data.user){await loadCloudData(data.user);msg.textContent='تم إنشاء الحساب وتسجيل الدخول.'}
    else msg.textContent='تم إرسال طلب إنشاء الحساب. إذا طُلب تأكيد البريد، افتح رسالة Supabase ثم ارجع وسجّل الدخول.';
@@ -257,7 +258,8 @@ function configureRoleUI(){
 function studentOptions(){return db.students.map(s=>'<option value="'+esc(s.id)+'">'+esc(s.name)+'</option>').join('')}
 function render(){
  const v=el('view');
- if(currentRole==='pending'){v.innerHTML='<h2>الحساب بانتظار التفعيل</h2><p>تم إنشاء الحساب، لكن يلزم أن يفعّله مدير معهد الكواكبي ويحدد صلاحياته قبل عرض بيانات الطلاب.</p>';return}
+ if(currentRole==='pending'){v.innerHTML='<h2>'+(PARTNER_APP?'حساب الشريك بانتظار التفعيل':'الحساب بانتظار التفعيل')+'</h2><p>'+(PARTNER_APP?'تم إنشاء حساب الشريك بنجاح. سيظهر لك قسم الأستاذ بعد أن يعيّن لك مدير المعهد صلاحية الأستاذ من حسابات وصلاحيات.':'تم إنشاء الحساب، لكن يلزم أن يفعّله مدير معهد الكواكبي ويحدد صلاحياته قبل عرض بيانات الطلاب.')+'</p>';return}
+ if(currentRole==='parent'&&PARTNER_APP){v.innerHTML='<h2>هذا الحساب ليس حساب شريك</h2><p>هذا البريد مسجل كولي أمر. اطلب من مدير المعهد مراجعة الصلاحية، ولا تستخدم هذه النسخة لمتابعة الأبناء.</p>';return}
  if(currentRole==='parent'){renderParentView();return}
  if(currentRole==='teacher' && !['attendance','marks','reports'].includes(tab))tab='attendance';
  if(currentRole==='manager' && tab==='permissions'){renderPermissions();return}
@@ -301,5 +303,6 @@ async function deleteStudentDirect(id){
   alert('فشل حذف الطالب من قاعدة البيانات. لم نخفِ الخطأ. التفاصيل: '+(err.message||err.details||'خطأ غير معروف'));
  }
 }
+if(PARTNER_APP){document.title='معهد الكواكبي — تطبيق الشريك';const lh=el('loginHeading'),li=el('loginIntro'),sh=el('signupHeading'),si=el('signupIntro');if(lh)lh.textContent='تسجيل دخول الشريك';if(li)li.textContent='هذه النسخة مخصصة للشريك/الكادر التدريسي في معهد الكواكبي.';if(sh)sh.textContent='إنشاء حساب شريك';if(si)si.textContent='أنشئ حسابك بالبريد الإلكتروني. سيبقى بانتظار تفعيل المدير قبل الوصول إلى بيانات المعهد.';}
 initAuth();
 </script></body></html>
