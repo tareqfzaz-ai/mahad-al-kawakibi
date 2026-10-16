@@ -163,6 +163,26 @@ let es=e.target.closest('[data-edit-student]');if(es){const x=db.students.find(a
 let et=e.target.closest('[data-edit-teacher]');if(et){const x=db.teachers.find(a=>a.id===et.dataset.editTeacher);if(!x)return;const n=prompt('اسم المدرّس',x.name);if(n===null)return;const sub=prompt('المادة',x.subject||'');if(sub===null)return;const p=prompt('رقم التواصل',x.phone||'');if(p===null)return;x.name=n.trim();x.subject=sub.trim();x.phone=p.trim();save();return}
 let dt=e.target.closest('[data-delete-teacher]');if(dt&&confirm('حذف هذا المدرّس؟')){db.teachers=db.teachers.filter(x=>x.id!==dt.dataset.deleteTeacher);save();return}
 let da=e.target.closest('[data-delete-attendance]');if(da&&confirm('حذف سجل الحضور؟')){db.attendance=db.attendance.filter(x=>x.id!==da.dataset.deleteAttendance);save();return}
-let b=e.target.closest('[data-delete-student]');if(b&&confirm('حذف الطالب وكل ما يتعلق به من سجلات؟')){let id=b.dataset.deleteStudent;db.students=db.students.filter(s=>s.id!==id);db.attendance=db.attendance.filter(a=>a.student!==id);db.marks=db.marks.filter(m=>m.student!==id);save()}});
+let b=e.target.closest('[data-delete-student]');if(b&&confirm('حذف الطالب وكل ما يتعلق به من سجلات؟')){deleteStudentDirect(b.dataset.deleteStudent);return}});
+
+async function deleteStudentDirect(id){
+ if(!currentUser){alert('انتهت جلسة الدخول. سجّل الدخول مجدداً ثم حاول.');return}
+ try{
+  await saveQueue;
+  const operations=[
+   sb.from('marks').delete().eq('student_id',id).eq('user_id',currentUser.id),
+   sb.from('attendance').delete().eq('student_id',id).eq('user_id',currentUser.id)
+  ];
+  for(const op of operations){const {error}=await op;if(error)throw error}
+  const {error}=await sb.from('students').delete().eq('id',id).eq('user_id',currentUser.id);
+  if(error)throw error;
+  await loadCloudData(currentUser);
+  if(db.students.some(s=>s.id===id))throw new Error('لم تؤكد قاعدة البيانات حذف الطالب؛ قد تكون صلاحيات الحذف أو سياسة الأمان تمنع العملية.');
+  alert('تم حذف الطالب وسجلاته المرتبطة من قاعدة البيانات بنجاح.');
+ }catch(err){
+  console.error('Direct student delete failed',err);
+  alert('فشل حذف الطالب من قاعدة البيانات. لم نخفِ الخطأ. التفاصيل: '+(err.message||err.details||'خطأ غير معروف'));
+ }
+}
 initAuth();
 </script></body></html>
