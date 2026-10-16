@@ -61,19 +61,43 @@ table{width:100%;border-collapse:separate;border-spacing:0;font-size:13px}th,td{
 footer{background:linear-gradient(135deg,#06152d,#102b52);border-top:3px solid var(--gold);text-align:center;padding:22px;color:#e9dfc5;font-size:12px;margin-top:18px}
 @media(max-width:650px){header{padding:23px 14px 26px}.brand{gap:11px}.logo{width:53px;height:53px;font-size:26px;border-radius:15px}h1{font-size:21px}.school-art{grid-template-columns:1fr;gap:8px}.art-card{padding:12px}.stats{gap:7px}.stat{padding:12px 9px}.stat strong{font-size:22px}.stat small{font-size:11px}.tabs{flex-wrap:nowrap;overflow-x:auto;scrollbar-width:thin;padding:6px}.tabs button{white-space:nowrap;font-size:12px;padding:10px}.gridform{grid-template-columns:1fr}.panel{padding:14px 11px}.auth-card{padding:18px;margin:18px auto}.auth-actions button{min-height:46px}th,td{padding:9px 6px;font-size:12px}}
 @media print{header,.tabs,.warning,.school-art,.notice,.stats,footer,button{display:none!important}body{background:#fff;color:#111}.panel{box-shadow:none;border:0}.auth-card{display:none!important}}
+
+/* صفحات دخول وإنشاء حساب منفصلة وتنقّل واضح بين أقسام النظام */
+.auth-card{min-height:360px}
+.auth-switch{display:flex;align-items:center;justify-content:center;gap:10px;flex-wrap:wrap;border-top:1px solid #b58a324a;margin-top:20px;padding-top:16px;color:#bdc8d8;font-size:13px}
+.auth-switch button{background:transparent;border-color:#d8b15a;color:#ffe39a}
+#loginPage,#signupPage{animation:pageIn .22s ease-out}
+#view{min-height:55vh;animation:pageIn .2s ease-out}
+@keyframes pageIn{from{opacity:.55;transform:translateY(5px)}to{opacity:1;transform:translateY(0)}}
+.tabs button{min-height:44px}
+@media(max-width:650px){.auth-card{min-height:0;padding:20px 16px}.auth-switch{gap:7px}.tabs{padding:7px}.tabs button{min-height:44px}}
 </style><script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
 </head>
 <body>
 <header><div class="wrap"><div class="brand"><div class="logo">✦</div><div><h1>معهد الكواكبي</h1><p>بإدارة الأستاذ عبد القادر رشيد</p><p>الكادر التدريسي المميز بحلب</p><p>حلب، الموكامبو، جانب مشفى الأجّاتي</p></div></div></div></header>
 <section id="authGate" class="auth-card wrap">
-<h2>تسجيل الدخول إلى معهد الكواكبي</h2>
-<p>سجّل الدخول للوصول إلى بياناتك المحفوظة سحابياً. إذا كانت هذه أول مرة، أنشئ حساب الإدارة باستخدام بريد إلكتروني تملكه وكلمة مرور قوية.</p>
+<div id="loginPage">
+<h2>تسجيل الدخول</h2>
+<p>أهلاً بك في نظام إدارة معهد الكواكبي. سجّل الدخول للمتابعة.</p>
 <form id="authForm">
 <label>البريد الإلكتروني<input name="email" type="email" autocomplete="username" placeholder="أدخل بريدك الإلكتروني" required></label>
-<label>كلمة المرور<input name="password" type="password" autocomplete="current-password" minlength="6" placeholder="6 أحرف على الأقل" required></label>
-<div class="auth-actions"><button class="primary" type="submit">تسجيل الدخول</button><button id="signupButton" type="button">إنشاء حساب جديد</button></div>
+<label>كلمة المرور<input name="password" type="password" autocomplete="current-password" minlength="6" placeholder="أدخل كلمة المرور" required></label>
+<div class="auth-actions"><button class="primary" type="submit">دخول إلى المعهد</button></div>
 </form>
-<p id="authMessage" role="status">بيانات الدخول لا تُعرض للآخرين. احتفظ بكلمة المرور لنفسك.</p>
+<p id="authMessage" role="status">بياناتك محمية. لا تشارك كلمة المرور مع أحد.</p>
+<div class="auth-switch"><span>ليس لديك حساب؟</span><button id="showSignup" type="button">إنشاء حساب جديد</button></div>
+</div>
+<div id="signupPage" hidden>
+<h2>إنشاء حساب جديد</h2>
+<p>أنشئ حساباً منفصلاً للوصول إلى نظام إدارة الطلاب.</p>
+<form id="signupForm">
+<label>البريد الإلكتروني<input name="email" type="email" autocomplete="username" placeholder="أدخل بريدك الإلكتروني" required></label>
+<label>كلمة المرور<input name="password" type="password" autocomplete="new-password" minlength="6" placeholder="6 أحرف على الأقل" required></label>
+<label>تأكيد كلمة المرور<input name="confirmPassword" type="password" autocomplete="new-password" minlength="6" placeholder="أعد كتابة كلمة المرور" required></label>
+<div class="auth-actions"><button class="primary" type="submit">إنشاء الحساب</button><button id="backToLogin" type="button">العودة لتسجيل الدخول</button></div>
+</form>
+<p id="signupMessage" role="status">استخدم بريداً إلكترونياً تملكه وكلمة مرور قوية.</p>
+</div>
 </section>
 <main id="appMain" class="wrap" style="padding:0 12px" hidden>
 <div class="session-bar"><span>الحساب: <b id="userEmail"></b></span><button id="logoutButton" type="button">تسجيل الخروج</button></div>
@@ -159,15 +183,17 @@ async function loadCloudData(user){
  el('authGate').hidden=true;el('appMain').hidden=false;
  render();
 }
-async function authAction(mode){
- const form=el('authForm'),f=new FormData(form),email=String(f.get('email')||'').trim(),password=String(f.get('password')||'');
- const msg=el('authMessage');msg.textContent='جارٍ الاتصال...';
+async function authAction(mode,formId){
+ const form=el(formId),f=new FormData(form),email=String(f.get('email')||'').trim(),password=String(f.get('password')||'');
+ const msg=el(mode==='signup'?'signupMessage':'authMessage');
+ if(mode==='signup'&&password!==String(f.get('confirmPassword')||'')){msg.textContent='كلمتا المرور غير متطابقتين.';return}
+ msg.textContent='جارٍ الاتصال...';
  try{
   if(mode==='signup'){
    const {data,error}=await sb.auth.signUp({email,password,options:{emailRedirectTo:window.location.origin+window.location.pathname}});
    if(error)throw error;
    if(data.session&&data.user){await loadCloudData(data.user);msg.textContent='تم إنشاء الحساب وتسجيل الدخول.'}
-   else msg.textContent='تم إرسال طلب إنشاء الحساب. إذا طلب منك تأكيد البريد، افتح رسالة Supabase ثم ارجع وسجّل الدخول.';
+   else msg.textContent='تم إرسال طلب إنشاء الحساب. إذا طُلب تأكيد البريد، افتح رسالة Supabase ثم ارجع وسجّل الدخول.';
   }else{
    const {data,error}=await sb.auth.signInWithPassword({email,password});
    if(error)throw error;
@@ -175,8 +201,10 @@ async function authAction(mode){
   }
  }catch(e){console.error(e);msg.textContent='تعذّر إتمام العملية: '+(e.message||'تحقق من البريد وكلمة المرور والاتصال.')}
 }
-el('authForm').addEventListener('submit',e=>{e.preventDefault();authAction('login')});
-el('signupButton').addEventListener('click',()=>authAction('signup'));
+el('authForm').addEventListener('submit',e=>{e.preventDefault();authAction('login','authForm')});
+el('signupForm').addEventListener('submit',e=>{e.preventDefault();authAction('signup','signupForm')});
+el('showSignup').addEventListener('click',()=>{el('loginPage').hidden=true;el('signupPage').hidden=false});
+el('backToLogin').addEventListener('click',()=>{el('signupPage').hidden=true;el('loginPage').hidden=false});
 el('logoutButton').addEventListener('click',async()=>{const {error}=await sb.auth.signOut();if(error){alert('تعذر تسجيل الخروج: '+error.message);return}currentUser=null;cloudSnapshot=null;db={students:[],teachers:[],attendance:[],marks:[],notifications:[]};el('appMain').hidden=true;el('authGate').hidden=false;el('authMessage').textContent='تم تسجيل الخروج بأمان.'});
 async function initAuth(){const {data,error}=await sb.auth.getSession();if(error){el('authMessage').textContent='تعذّر فحص جلسة الدخول: '+error.message;return}if(data.session){try{await loadCloudData(data.session.user)}catch(e){console.error(e);el('authGate').hidden=false;el('appMain').hidden=true;el('authMessage').textContent='تعذّر تحميل بيانات السحابة: '+(e.message||'تحقق من الاتصال.')}}else{el('authGate').hidden=false;el('appMain').hidden=true}}
 function esc(s){return String(s??'').replace(/[&<>"']/g,c=>({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[c]))}function today(){return new Date().toISOString().slice(0,10)}function el(id){return document.getElementById(id)}function setTab(t){tab=t;document.querySelectorAll('#tabs button').forEach(b=>b.classList.toggle('active',b.dataset.tab===t));render()}
