@@ -67,13 +67,15 @@ const tableSpecs=[
 ];
 let saveQueue=Promise.resolve();
 async function syncCloud(){
+  // Assign stable IDs to live records before cloning; otherwise every save can
+  // generate a new cloud ID that is missing from db and break delete diffs.
+  for(const spec of tableSpecs)for(const rec of (db[spec.key]||[]))if(!rec.id)rec.id=crypto.randomUUID();
   // Freeze the exact state being synced so edits made during a network request
   // are picked up by the next queued save instead of being mistaken as saved.
   const target=cloneData(db);
   const previous=cloudSnapshot||{students:[],teachers:[],attendance:[],marks:[],notifications:[]};
   const changes=tableSpecs.map(spec=>{
    const now=target[spec.key]||[],before=previous[spec.key]||[],oldById=new Map(before.map(x=>[x.id,x]));
-   for(const rec of now)if(!rec.id)rec.id=crypto.randomUUID();
    const currentIds=new Set(now.map(x=>x.id));
    return {spec,changed:now.filter(rec=>!oldById.has(rec.id)||JSON.stringify(oldById.get(rec.id))!==JSON.stringify(rec)).map(spec.row),removed:before.filter(x=>!currentIds.has(x.id)).map(x=>x.id)};
   });
