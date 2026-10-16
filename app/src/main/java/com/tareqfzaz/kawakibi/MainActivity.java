@@ -66,7 +66,7 @@ public class MainActivity extends Activity {
             }
         });
         setContentView(webView);
-        webView.loadUrl("https://tareqfzaz-ai.github.io/mahad-al-kawakibi/?v=15");
+        webView.loadUrl("https://tareqfzaz-ai.github.io/mahad-al-kawakibi/?app=partner&v=16");
     }
 
     @Override protected void onSaveInstanceState(Bundle outState) {
