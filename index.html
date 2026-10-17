@@ -83,6 +83,47 @@ footer{background:linear-gradient(135deg,#06152d,#102b52);border-top:3px solid v
 @keyframes pageIn{from{opacity:.55;transform:translateY(5px)}to{opacity:1;transform:translateY(0)}}
 .tabs button{min-height:44px}
 @media(max-width:650px){.auth-card{min-height:0;padding:20px 16px}.auth-switch{gap:7px}.tabs{padding:7px}.tabs button{min-height:44px}}
+
+/* بطاقات تنقّل كبيرة ورسومات واضحة لكل صفحة */
+#tabs button{display:flex;flex-direction:column;align-items:center;justify-content:center;gap:5px;min-height:96px;font-weight:700;font-size:14px;line-height:1.4;text-align:center}
+#tabs button::before{display:block;font-size:31px;line-height:1.15;filter:drop-shadow(0 3px 5px #0004)}
+#tabs button[data-tab="students"]::before{content:"🎓"}
+#tabs button[data-tab="attendance"]::before{content:"📅"}
+#tabs button[data-tab="marks"]::before{content:"📊"}
+#tabs button[data-tab="teachers"]::before{content:"👨‍🏫"}
+#tabs button[data-tab="reports"]::before{content:"📄"}
+#tabs button[data-tab="backup"]::before{content:"💾"}
+#tabs button[data-tab="permissions"]::before{content:"🛡️"}
+#tabs button[data-tab="parent"]::before{content:"👨‍👩‍👧"}
+#view{position:relative;overflow:hidden}
+#view::before{content:"✦";display:grid;place-items:center;width:84px;height:84px;margin:0 auto 12px;border:2px solid #d8b15a;border-radius:24px;background:linear-gradient(145deg,#173f6c,#06152d);color:#ffe39a;font-size:46px;box-shadow:0 0 0 7px #d8b15a12,0 10px 22px #0004}
+#view::after{display:block;text-align:center;font-size:13px;line-height:1.8;color:#bdc8d8;margin:0 auto 22px;padding-bottom:14px;border-bottom:1px solid #30445f;max-width:440px}
+#view[data-page="students"]::before{content:"🎓"}
+#view[data-page="students"]::after{content:"إدارة الطلاب • إضافة وتنظيم بيانات الطلاب والصفوف"}
+#view[data-page="attendance"]::before{content:"📅"}
+#view[data-page="attendance"]::after{content:"الحضور والغياب • متابعة يومية منظمة"}
+#view[data-page="marks"]::before{content:"📊"}
+#view[data-page="marks"]::after{content:"العلامات والمذاكرات • تسجيل النتائج ومراجعتها"}
+#view[data-page="teachers"]::before{content:"👨‍🏫"}
+#view[data-page="teachers"]::after{content:"المدرّسون • إدارة الكادر والمواد وبيانات التواصل"}
+#view[data-page="reports"]::before{content:"📄"}
+#view[data-page="reports"]::after{content:"التقارير الشهرية • الطباعة والحفظ والإرسال"}
+#view[data-page="backup"]::before{content:"💾"}
+#view[data-page="backup"]::after{content:"النسخ الاحتياطي • تنزيل البيانات واستعادتها بأمان"}
+#view[data-page="permissions"]::before{content:"🛡️"}
+#view[data-page="permissions"]::after{content:"إدارة الحسابات • ضبط الأدوار والصلاحيات وربط الطلاب"}
+#view[data-page="parent"]::before{content:"👨‍👩‍👧"}
+#view[data-page="parent"]::after{content:"متابعة الأبناء • الحضور والعلامات والملاحظات"}
+#view[data-page="pending"]::before{content:"🔐"}
+#view[data-page="pending"]::after{content:"تفعيل الحساب • بانتظار تحديد الصلاحيات من الإدارة"}
+@media(max-width:650px){
+ #tabs button{min-height:88px;padding:10px 6px;font-size:13px}
+ #tabs button::before{font-size:29px}
+ #view::before{width:72px;height:72px;font-size:39px;border-radius:21px}
+ #view::after{font-size:12px;margin-bottom:18px}
+}
+@media print{#view::before,#view::after{display:none!important}}
+
 </style><script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
 </head>
 <body>
@@ -258,6 +299,7 @@ function configureRoleUI(){
 function studentOptions(){return db.students.map(s=>'<option value="'+esc(s.id)+'">'+esc(s.name)+'</option>').join('')}
 function render(){
  const v=el('view');
+ v.dataset.page=currentRole==='pending'?'pending':tab;
  if(currentRole==='pending'){v.innerHTML='<h2>'+(PARTNER_APP?'حساب الشريك بانتظار التفعيل':'الحساب بانتظار التفعيل')+'</h2><p>'+(PARTNER_APP?'تم إنشاء حساب الشريك بنجاح. سيظهر لك قسم الأستاذ بعد أن يعيّن لك مدير المعهد صلاحية الأستاذ من حسابات وصلاحيات.':'تم إنشاء الحساب، لكن يلزم أن يفعّله مدير معهد الكواكبي ويحدد صلاحياته قبل عرض بيانات الطلاب.')+'</p>';return}
  if(currentRole==='parent'&&PARTNER_APP){v.innerHTML='<h2>هذا الحساب ليس حساب شريك</h2><p>هذا البريد مسجل كولي أمر. اطلب من مدير المعهد مراجعة الصلاحية، ولا تستخدم هذه النسخة لمتابعة الأبناء.</p>';return}
  if(currentRole==='parent'){renderParentView();return}
